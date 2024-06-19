@@ -48,3 +48,11 @@ jobs:
           BENCH_FILENAME: "bench.out"
       - run: |
           cat bench.out
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/bake-action@v5
+        with:
+          source: "{{defaultContext}}"
+          targets: lint-all
