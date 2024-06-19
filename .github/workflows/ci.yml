@@ -44,7 +44,7 @@ jobs:
         with:
           source: "{{defaultContext}}"
           targets: bench
-        env: 
+        env:
           BENCH_FILENAME: "bench.out"
       - run: |
           cat bench.out

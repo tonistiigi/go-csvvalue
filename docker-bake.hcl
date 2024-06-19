@@ -58,3 +58,11 @@ target "bench" {
     output = [BENCH_FILENAME!=null?".":"type=cacheonly"]
 }
 
+target "lint" {
+    dockerfile = "hack/dockerfiles/lint.Dockerfile"
+    output = ["type=cacheonly"]
+}
+
+target "lint-all" {
+    inherits = ["lint", "_all_platforms"]
+}
