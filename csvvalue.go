@@ -1,3 +1,6 @@
+// Package csvvalue provides an efficient parser for a single line CSV value.
+// It is more efficient than the standard library csv package for parsing many
+// small values. For multi-line CSV parsing, the standard library is recommended.
 package csvvalue
 
 import (
@@ -13,20 +16,27 @@ var errInvalidDelim = errors.New("csv: invalid field or comment delimiter")
 
 var defaultParser = NewParser()
 
+// Fields parses the line with default parser and returns
+// slice of fields for the record. If dst is nil, a new slice is allocated.
 func Fields(inp string, dst []string) ([]string, error) {
 	return defaultParser.Fields(inp, dst)
 }
 
+// Parser is a CSV parser for a single line value.
 type Parser struct {
 	Comma            rune
 	LazyQuotes       bool
 	TrimLeadingSpace bool
 }
 
+// NewParser returns a new Parser with default settings.
 func NewParser() *Parser {
 	return &Parser{Comma: ','}
 }
 
+// Fields parses the line and returns slice of fields for the record.
+// If dst is nil, a new slice is allocated.
+// For backward compatibility, a trailing newline is allowed.
 func (r *Parser) Fields(line string, dst []string) ([]string, error) {
 	if !validDelim(r.Comma) {
 		return nil, errInvalidDelim
@@ -93,52 +103,51 @@ parseField:
 				continue
 			}
 			break
-		} else {
-			// Quoted string field
-			line = line[quoteLen:]
-			pos += quoteLen
-			halfOpen := false
-			for {
-				i := strings.IndexRune(line, '"')
-				if i >= 0 {
-					// Hit next quote.
-					if !halfOpen {
-						dst = append(dst, line[:i])
-					} else {
-						appendToLast(dst, line[:i])
-					}
-					halfOpen = false
-					line = line[i+quoteLen:]
-					pos += i + quoteLen
-					switch rn := nextRune(line); {
-					case rn == '"':
-						// `""` sequence (append quote).
-						appendToLast(dst, "\"")
-						line = line[quoteLen:]
-						pos += quoteLen
-					case rn == r.Comma:
-						// `",` sequence (end of field).
-						line = line[commaLen:]
-						pos += commaLen
-						continue parseField
-					case len(line) == 0:
-						break parseField
-					case r.LazyQuotes:
-						// `"` sequence (bare quote).
-						appendToLast(dst, "\"")
-						halfOpen = true
-					default:
-						// `"*` sequence (invalid non-escaped quote).
-						return nil, parseErr(pos-quoteLen, csv.ErrQuote)
-					}
+		}
+		// Quoted string field
+		line = line[quoteLen:]
+		pos += quoteLen
+		halfOpen := false
+		for {
+			i := strings.IndexRune(line, '"')
+			if i >= 0 {
+				// Hit next quote.
+				if !halfOpen {
+					dst = append(dst, line[:i])
 				} else {
-					if !r.LazyQuotes {
-						return nil, parseErr(pos, csv.ErrQuote)
-					}
-					// Hit end of line (copy all data so far).
-					dst = append(dst, line)
-					break parseField
+					appendToLast(dst, line[:i])
 				}
+				halfOpen = false
+				line = line[i+quoteLen:]
+				pos += i + quoteLen
+				switch rn := nextRune(line); {
+				case rn == '"':
+					// `""` sequence (append quote).
+					appendToLast(dst, "\"")
+					line = line[quoteLen:]
+					pos += quoteLen
+				case rn == r.Comma:
+					// `",` sequence (end of field).
+					line = line[commaLen:]
+					pos += commaLen
+					continue parseField
+				case len(line) == 0:
+					break parseField
+				case r.LazyQuotes:
+					// `"` sequence (bare quote).
+					appendToLast(dst, "\"")
+					halfOpen = true
+				default:
+					// `"*` sequence (invalid non-escaped quote).
+					return nil, parseErr(pos-quoteLen, csv.ErrQuote)
+				}
+			} else {
+				if !r.LazyQuotes {
+					return nil, parseErr(pos, csv.ErrQuote)
+				}
+				// Hit end of line (copy all data so far).
+				dst = append(dst, line)
+				break parseField
 			}
 		}
 	}

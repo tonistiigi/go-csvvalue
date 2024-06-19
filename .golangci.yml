@@ -1,0 +1,32 @@
+# run:
+#   timeout: 30m
+
+#   # modules-download-mode: vendor
+
+linters:
+  enable:
+    - bodyclose
+    - depguard
+    - errname
+    - forbidigo
+    - gocritic
+    - gofmt
+    - goimports
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - makezero
+    - misspell
+    - noctx
+    - nolintlint
+    - revive
+    - staticcheck
+    - typecheck
+    - unused
+    - whitespace
+  disable-all: true
+
+issues:
+  exclude-use-default: false
