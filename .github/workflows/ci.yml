@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        goversion: ["1.19", "1.20", "1.21", "1.22"]
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/bake-action@v5
+        with:
+          source: "{{defaultContext}}"
+          targets: build-all
+        env:
+          GO_VERSION: ${{ matrix.goversion }}
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/bake-action@v5
+        with:
+          source: "{{defaultContext}}"
+          targets: test
+        env:
+          COVER_FILENAME: "cover.out"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          disable_file_fixes: true
+          files: ./cover.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+  bench:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/bake-action@v5
+        with:
+          source: "{{defaultContext}}"
+          targets: bench
+        env: 
+          BENCH_FILENAME: "bench.out"
+      - run: |
+          cat bench.out
