@@ -170,6 +170,14 @@ var testCases = []tcase{{
 	Input:  "a€b€c\n",
 	Output: []string{"a", "b", "c"},
 	Comma:  '€',
+}, {
+	Name:   "OCI config",
+	Input:  `type=docker,name=test.docker,"containerimage.config={""Config"":{""Entrypoint"":[""/sbin/init"", ""--log-level=err""], ""StopSignal"":""37""},""os"":""linux"", ""architecture"":""amd64""}"`,
+	Output: []string{"type=docker", "name=test.docker", `containerimage.config={"Config":{"Entrypoint":["/sbin/init", "--log-level=err"], "StopSignal":"37"},"os":"linux", "architecture":"amd64"}`},
+}, {
+	Name:   "End double quote",
+	Input:  `a,"foo""",c`,
+	Output: []string{"a", `foo"`, "c"},
 },
 }
 
