@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        goversion: ["1.19", "1.20", "1.21", "1.22"]
+        goversion: ["1.19", "1.20", "1.21", "1.22", "1.23"]
     steps:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/bake-action@v5
