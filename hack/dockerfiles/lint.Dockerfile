@@ -1,10 +1,10 @@
 #syntax=docker/dockerfile:1.8
 #check=error=true
 
-ARG GO_VERSION=1.22
+ARG GO_VERSION=1.23
 ARG ALPINE_VERSION=3.20
 ARG XX_VERSION=1.4.0
-ARG GOLANGCI_LINT_VERSION=1.59.1
+ARG GOLANGCI_LINT_VERSION=1.60.1
 
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS golang-base
 FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
