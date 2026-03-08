@@ -100,7 +100,7 @@ func TestSplitMultipleIterations(t *testing.T) {
 }
 
 func TestSplitDefaultParser(t *testing.T) {
-	out, err := FieldsSplit("foo,bar,baz", nil)
+	out, err := Fields("foo,bar,baz", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestSplitDefaultParser(t *testing.T) {
 	}
 
 	// Test buffer reuse
-	out2, err := FieldsSplit("aaa,bbb", out)
+	out2, err := Fields("aaa,bbb", out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

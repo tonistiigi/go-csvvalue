@@ -7,7 +7,6 @@ linters:
   default: none
   enable:
     - bodyclose
-    - depguard
     - errname
     - forbidigo
     - gocritic

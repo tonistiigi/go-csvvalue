@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/tonistiigi/go-csvvalue/legacy"
 )
 
 type fieldsFunc func(string, []string) ([]string, error)
@@ -28,9 +30,9 @@ func stdlibTest(tc tcase) fieldsFunc {
 	}
 }
 
-func csvValueTest(tc tcase) fieldsFunc {
+func legacyTest(tc tcase) fieldsFunc {
 	return func(s string, _ []string) ([]string, error) {
-		rdr := NewParser()
+		rdr := legacy.NewParser()
 		if tc.Comma != 0 {
 			rdr.Comma = tc.Comma
 		}
@@ -48,14 +50,14 @@ func splitTest(tc tcase) fieldsFunc {
 		}
 		rdr.LazyQuotes = tc.LazyQuotes
 		rdr.TrimLeadingSpace = tc.TrimLeadingSpace
-		return rdr.FieldsSplit(s, nil)
+		return rdr.Fields(s, nil)
 	}
 }
 
 var testFuncs = map[string]fieldsTestFunc{
-	"stdlib":   stdlibTest,
-	"csvvalue": csvValueTest,
-	"split":    splitTest,
+	"stdlib": stdlibTest,
+	"legacy": legacyTest,
+	"split":  splitTest,
 }
 
 type tcase struct {

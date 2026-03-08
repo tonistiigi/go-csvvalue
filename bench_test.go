@@ -2,6 +2,8 @@ package csvvalue
 
 import (
 	"testing"
+
+	"github.com/tonistiigi/go-csvvalue/legacy"
 )
 
 var cacheMatrix = map[string]func(*testing.B, fieldsFunc, string){
@@ -10,9 +12,9 @@ var cacheMatrix = map[string]func(*testing.B, fieldsFunc, string){
 }
 
 var fieldsFuncs = map[string]fieldsFunc{
-	"stdlib":   stdlibFields,
-	"csvvalue": Fields,
-	"split":    FieldsSplit,
+	"stdlib": stdlibFields,
+	"legacy": legacy.Fields,
+	"split":  Fields,
 }
 
 func benchFieldsWithCache(b *testing.B, f fieldsFunc, inp string) {
@@ -49,8 +51,8 @@ var rangeFuncs = map[string]rangeFunc{
 		}
 		return nil
 	},
-	"csvvalue": func(inp string) error {
-		res, err := Fields(inp, nil)
+	"legacy": func(inp string) error {
+		res, err := legacy.Fields(inp, nil)
 		if err != nil {
 			return err
 		}

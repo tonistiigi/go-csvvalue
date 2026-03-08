@@ -14,12 +14,6 @@ func Split(inp string) iter.Seq2[string, error] {
 	return defaultParser.Split(inp)
 }
 
-// FieldsSplit parses the line using the default parser by calling the iterator
-// and collecting elements to a slice. If dst is nil, a new slice is allocated.
-func FieldsSplit(inp string, dst []string) ([]string, error) {
-	return defaultParser.FieldsSplit(inp, dst)
-}
-
 // Split returns an iterator over the fields in a CSV line.
 // The iterator yields (field, nil) for each field, or ("", error) on parse error.
 // Iteration stops after the first error. If the input is empty, the iterator
@@ -232,22 +226,4 @@ func splitRune(line, orig string, comma rune, commaLen int, trim, lazyQuotes boo
 		}
 	nextField:
 	}
-}
-
-// FieldsSplit parses the line by calling the iterator and collecting elements to a slice.
-// If dst is nil, a new slice is allocated.
-func (r *Parser) FieldsSplit(inp string, dst []string) ([]string, error) {
-	if cap(dst) == 0 {
-		dst = make([]string, 0, 1+strings.Count(inp, string(r.Comma)))
-	} else {
-		dst = dst[:0]
-	}
-
-	for field, err := range r.Split(inp) {
-		if err != nil {
-			return nil, err
-		}
-		dst = append(dst, field)
-	}
-	return dst, nil
 }
