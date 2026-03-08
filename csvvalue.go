@@ -147,7 +147,11 @@ parseField:
 					return nil, parseErr(pos, csv.ErrQuote)
 				}
 				// Hit end of line (copy all data so far).
-				dst = append(dst, line)
+				if halfOpen {
+					appendToLast(dst, line)
+				} else {
+					dst = append(dst, line)
+				}
 				break parseField
 			}
 		}
