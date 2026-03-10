@@ -19,26 +19,20 @@ For backwards compatibility with stdlib record parser, the input may contain a t
 
 ```
 goos: linux
-goarch: amd64
-pkg: github.com/tonistiigi/go-csvvalue
-cpu: AMD EPYC 7763 64-Core Processor                
-BenchmarkFields/stdlib/withcache-4         	 1109917	      1103 ns/op	    4520 B/op	      14 allocs/op
-BenchmarkFields/stdlib/nocache-4           	 1082838	      1125 ns/op	    4520 B/op	      14 allocs/op
-BenchmarkFields/csvvalue/withcache-4       	28554976	        42.12 ns/op	       0 B/op	       0 allocs/op
-BenchmarkFields/csvvalue/nocache-4         	13666134	        83.77 ns/op	      48 B/op	       1 allocs/op
-```
-```
-goos: darwin
 goarch: arm64
 pkg: github.com/tonistiigi/go-csvvalue
-BenchmarkFields/stdlib/nocache-10                1679923               784.9 ns/op          4520 B/op         14 allocs/op
-BenchmarkFields/stdlib/withcache-10              1641891               826.9 ns/op          4520 B/op         14 allocs/op
-BenchmarkFields/csvvalue/withcache-10           34399642                33.93 ns/op            0 B/op          0 allocs/op
-BenchmarkFields/csvvalue/nocache-10             17441373                67.21 ns/op           48 B/op          1 allocs/op
+BenchmarkFields/stdlib/nocache-16         817705     1364 ns/op    4520 B/op    14 allocs/op
+BenchmarkFields/stdlib/withcache-16       824451     1334 ns/op    4520 B/op    14 allocs/op
+BenchmarkFields/legacy/withcache-16     64307284    19.02 ns/op       0 B/op     0 allocs/op
+BenchmarkFields/legacy/nocache-16       28163379    43.50 ns/op      48 B/op     1 allocs/op
+BenchmarkFields/split/nocache-16        28516675    43.53 ns/op      48 B/op     1 allocs/op
+BenchmarkFields/split/withcache-16      59064800    21.02 ns/op       0 B/op     0 allocs/op
+BenchmarkRange/stdlib-16                 1000000     1367 ns/op    4520 B/op    14 allocs/op
+BenchmarkRange/legacy-16                24597015    44.06 ns/op      48 B/op     1 allocs/op
+BenchmarkRange/split-16                 72433822    16.37 ns/op       0 B/op     0 allocs/op
 PASS
 ```
 
 ### Credits
 
 This package is mostly based on `encoding/csv` implementation and also uses that package for compatibility testing.
-
