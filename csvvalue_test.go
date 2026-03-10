@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/tonistiigi/go-csvvalue/legacy"
 )
 
 type fieldsFunc func(string, []string) ([]string, error)
@@ -28,7 +30,19 @@ func stdlibTest(tc tcase) fieldsFunc {
 	}
 }
 
-func csvValueTest(tc tcase) fieldsFunc {
+func legacyTest(tc tcase) fieldsFunc {
+	return func(s string, _ []string) ([]string, error) {
+		rdr := legacy.NewParser()
+		if tc.Comma != 0 {
+			rdr.Comma = tc.Comma
+		}
+		rdr.LazyQuotes = tc.LazyQuotes
+		rdr.TrimLeadingSpace = tc.TrimLeadingSpace
+		return rdr.Fields(s, nil)
+	}
+}
+
+func splitTest(tc tcase) fieldsFunc {
 	return func(s string, _ []string) ([]string, error) {
 		rdr := NewParser()
 		if tc.Comma != 0 {
@@ -41,8 +55,9 @@ func csvValueTest(tc tcase) fieldsFunc {
 }
 
 var testFuncs = map[string]fieldsTestFunc{
-	"stdlib":   stdlibTest,
-	"csvvalue": csvValueTest,
+	"stdlib": stdlibTest,
+	"legacy": legacyTest,
+	"split":  splitTest,
 }
 
 type tcase struct {
@@ -171,6 +186,65 @@ var testCases = []tcase{{
 	Output: []string{"a", "b", "c"},
 	Comma:  '€',
 }, {
+	Name:   "Unicode comma quoted",
+	Input:  `a€"b€c"€d`,
+	Output: []string{"a", "b€c", "d"},
+	Comma:  '€',
+}, {
+	Name:   "Unicode comma end double quote",
+	Input:  `a€"foo"""€c`,
+	Output: []string{"a", `foo"`, "c"},
+	Comma:  '€',
+}, {
+	Name:  "Unicode comma bare quote",
+	Input: `a€bb"€c`,
+	Error: &csv.ParseError{Err: csv.ErrBareQuote, StartLine: 1, Line: 1, Column: 7},
+	Comma: '€',
+}, {
+	Name:  "Unicode comma extraneous quote",
+	Input: `"a "word"€b`,
+	Error: &csv.ParseError{Err: csv.ErrQuote, StartLine: 1, Line: 1, Column: 4},
+	Comma: '€',
+}, {
+	Name:       "Unicode comma lazy quotes",
+	Input:      `a "word"€"1"2"€b`,
+	Output:     []string{`a "word"`, `1"2`, `b`},
+	Comma:      '€',
+	LazyQuotes: true,
+}, {
+	Name:       "Unicode comma lazy unclosed quote",
+	Input:      `"abc`,
+	Output:     []string{"abc"},
+	Comma:      '€',
+	LazyQuotes: true,
+}, {
+	Name:       "Lazy quotes escaped quote at EOF",
+	Input:      `"ab""cd`,
+	Output:     []string{`ab"cd`},
+	LazyQuotes: true,
+}, {
+	Name:       "Lazy quotes escaped quote before delimiter",
+	Input:      `"ab""cd",e`,
+	Output:     []string{`ab"cd`, "e"},
+	LazyQuotes: true,
+}, {
+	Name:             "Unicode comma trim",
+	Input:            `  a€  "b"€  c`,
+	Output:           []string{"a", "b", "c"},
+	Comma:            '€',
+	TrimLeadingSpace: true,
+}, {
+	Name:             "Unicode comma trim spaces only",
+	Input:            "   ",
+	Output:           []string{""},
+	Comma:            '€',
+	TrimLeadingSpace: true,
+}, {
+	Name:   "Unicode comma quoted end",
+	Input:  `a€"b"`,
+	Output: []string{"a", "b"},
+	Comma:  '€',
+}, {
 	Name:   "OCI config",
 	Input:  `type=docker,name=test.docker,"containerimage.config={""Config"":{""Entrypoint"":[""/sbin/init"", ""--log-level=err""], ""StopSignal"":""37""},""os"":""linux"", ""architecture"":""amd64""}"`,
 	Output: []string{"type=docker", "name=test.docker", `containerimage.config={"Config":{"Entrypoint":["/sbin/init", "--log-level=err"], "StopSignal":"37"},"os":"linux", "architecture":"amd64"}`},
@@ -178,6 +252,30 @@ var testCases = []tcase{{
 	Name:   "End double quote",
 	Input:  `a,"foo""",c`,
 	Output: []string{"a", `foo"`, "c"},
+}, {
+	Name:   "Empty between commas",
+	Input:  `a,,b`,
+	Output: []string{"a", "", "b"},
+}, {
+	Name:   "Trailing comma",
+	Input:  `a,b,`,
+	Output: []string{"a", "b", ""},
+}, {
+	Name:   "Leading comma",
+	Input:  `,a,b`,
+	Output: []string{"", "a", "b"},
+}, {
+	Name:   "Single field",
+	Input:  `foo`,
+	Output: []string{"foo"},
+}, {
+	Name:   "Multiple empty fields",
+	Input:  `,,`,
+	Output: []string{"", "", ""},
+}, {
+	Name:   "Mixed quoted unquoted",
+	Input:  `"a",b,"c"`,
+	Output: []string{"a", "b", "c"},
 },
 }
 
@@ -245,6 +343,28 @@ func TestInvalidDelimeter(t *testing.T) {
 	_, err := p.Fields("foo\nbar\nbaz", nil)
 	if !errors.Is(err, errInvalidDelim) {
 		t.Fatalf("unexpected error: got %v, want %v", err, errInvalidDelim)
+	}
+}
+
+// Unclosed quote error column differs between stdlib and csvvalue/split,
+// so exact column is not checked. Tested separately from the shared table.
+func TestUnicodeCommaUnclosedQuote(t *testing.T) {
+	for name, f := range testFuncs {
+		t.Run(name, func(t *testing.T) {
+			tc := tcase{Input: `"abc`, Comma: '€'}
+			rdr := f(tc)
+			_, err := rdr(tc.Input, nil)
+			if err == nil {
+				t.Fatal("expected error")
+			}
+			var perr *csv.ParseError
+			if !errors.As(err, &perr) {
+				t.Fatalf("expected csv.ParseError, got %v", err)
+			}
+			if !errors.Is(perr.Err, csv.ErrQuote) {
+				t.Fatalf("expected ErrQuote, got %v", perr.Err)
+			}
+		})
 	}
 }
 
